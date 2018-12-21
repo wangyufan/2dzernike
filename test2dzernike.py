@@ -97,7 +97,7 @@ def tst_2d_zernike_mom(n, l, filename, h5file, flag):
   for nl, c in zip( nls, moments):
     if(abs(c)<1e-3):
       c=0
-    # print nl, c
+    print nl, c
 
   reconst=flex.complex_double(NP**2, 0)
   for nl,c in zip( nls, moments):
