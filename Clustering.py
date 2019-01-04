@@ -1,6 +1,7 @@
 from numpy import *
 from itertools import combinations
 from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import ward, fcluster
 
 
 class ClusterNode(object):
@@ -112,10 +113,11 @@ def Mahalanobis(vec1, vec2):
 
 def StandardEuclidean(vec1, vec2):
     X = vstack([vec1, vec2])
-    # dist = pdist(X,'seuclidean')
-    # sd_mat = var(X, axis=0, ddof=1) / sd_mat
+    dist = pdist(X,'seuclidean')
+    print "-----", dist
+    # sd_mat = var(X, axis=0, ddof=1)
     # print (vec1 - vec2) ** 2 , sd_mat
-    dist = sqrt(((vec1/vec1[0] - vec2/vec2[0]) ** 2).sum())
+    # dist = sqrt(((vec1/vec1[0] - vec2/vec2[0]) ** 2  / sd_mat).sum())
     # print dist
     return dist
 
@@ -171,7 +173,7 @@ def hcluster(cluster_num, features, distfcn=StandardEuclidean):
             # if d>closest:
             #     closest = d 
             #     lowestpair = (ni,nj) 
-        print "-----", closest
+        
         ni,nj = lowestpair#find a closest pair 
         # average the two clusters
         new_vec = (ni.vec + nj.vec) / 2.0

@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.cluster import KMeans
 import Clustering 
+import Clustering_v2
+from scipy.cluster import hierarchy
+import matplotlib.pyplot as plt
 import pylab
 
 
@@ -59,6 +62,7 @@ def tst_2d_zernike_mom(n, l, file):
 if __name__ == "__main__":
   args = sys.argv[1:]
   cluster_num = args[0]
+  cluster_type = args[1]
   t_s = time.time()
   n = 2
   l = 2
@@ -72,7 +76,7 @@ if __name__ == "__main__":
   path = '/Users/wyf/Desktop/anti_stat/crop_test.h5'
   h5_file = h5py.File(path,'r')
   # cluster_h5 = h5_file['data'].value
-  cluster_h5 = h5_file['cluster_data'].value[:99]
+  cluster_h5 = h5_file['cluster_data'].value[:40]
   # print "----",cluster_h5
   # imlist=[]  
   # for p in range(len(cluster_h5)):
@@ -93,21 +97,30 @@ if __name__ == "__main__":
   t2 = time.time()
   print "time used for getting features matrix: ", t2 - t1
   t3 = time.time()
-  print features
-  tree_list = Clustering.hcluster(cluster_num, features)
+  print cluster_type
+  tree_list = Clustering_v2.hcluster(features, cluster_num, cluster_type) #set cluster_num as x
+  # Clustering_v2.hcluster(features, cluster_num, 'b')
+  # Clustering_v2.hcluster(features, cluster_num, 'cos')
+  # Clustering_v2.hcluster(features, cluster_num, 's')
+  # Clustering_v2.hcluster(features, cluster_num, 'm')
+  # Clustering_v2.hcluster(features, cluster_num, 'e')
+
+  
+  # tree_list = Clustering.hcluster(cluster_num, features)
   # tree_list_plot = Clustering.hcluster(cluster_num, features)
-  t4 = time.time()
-  print "time used for clustering: ", t4 - t3
     # input outcome
-  print "cluster outcome:"
-  t5 = time.time()
-  res = open(str(cluster_num)+'_sed_res40.dat','w')
-  while (len(tree_list)>0):
-      for root in tree_list:
-          print root.get_cluster_elements()
-          print>>res, root.get_cluster_elements()
-          tree_list.remove(root)
-  t6 = time.time()
+
+  # print "cluster outcome:"
+  # t5 = time.time()
+  # res = open(str(cluster_num)+'_sed_res40.dat','w')
+  # while (len(tree_list)>0):
+  #     for root in tree_list:
+  #         print root.get_cluster_elements()
+  #         print>>res, root.get_cluster_elements()
+  #         tree_list.remove(root)
+  # t6 = time.time()
+
+
   # print "time used for generating result: ", t6 - t5
   # for i in range(len(tree_list_plot)):
   #   if len(tree_list_plot[i].get_cluster_elements())!=1:

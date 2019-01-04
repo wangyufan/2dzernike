@@ -16,9 +16,15 @@ def H5ToMatrix(filename):
   return file 
 
 if __name__ == "__main__":
-  path = '/Users/wyf/Desktop/anti_stat/200_template.h5'
-  data = H5ToMatrix(path)
-  for i in range(len(data)):
-    image_mat = data[i]
-    im = MatrixToImage(image_mat)
-    im.resize((640,640)).convert('L').save('/Users/wyf/Documents/templates/'+str(i+1)+".jpg")
+  path = '/Users/wyf/Documents/test_doc/40templates-v2/'
+  files = os.listdir(path)
+  template_list = [os.path.join(path, f) for f in files if f.endswith('_templates.h5')]
+  for t_path in template_list:
+    data = H5ToMatrix(t_path)
+    t_type = os.path.basename(t_path).split('_templates')[0]
+    for i in range(len(data)):
+      image_mat = data[i]
+      im = MatrixToImage(image_mat)
+      output = '/Users/wyf/Documents/test_doc/40templates_image-v2/'+str(t_type)+'_'+str(i+1)+".jpg"
+      print output
+      im.resize((640,640)).convert('L').save(output)
