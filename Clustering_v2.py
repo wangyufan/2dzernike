@@ -16,20 +16,20 @@ def hcluster(features, x, type_flag):
 	elif type_flag == 'b':
 		type_x = 'braycurtis'
 	else:
-		 type_x = 'euclidean'
+		type_x = 'euclidean'
 
 	Z = ward(pdist(features, type_x))
 	# print Z
 	data = fcluster(Z, t=x, criterion='distance')
 	print len(data)
 	# save('/Users/wyf/Desktop/aaa.npy',data)
-	path = '/Users/wyf/Documents/test_doc/40cluster_res/'+type_x+'_cluster_res.h5'
+	path = '/Users/wyf/Documents/100f_result/cluster_res/'+type_x+'_cluster_res.h5'
 	output = h5py.File(path, 'w')
 	output.create_dataset('data', data = data)
-	h5_file = h5py.File(path,'r')
-  	cluster = h5_file['data'].value
-  	cluster_unique = unique(cluster)
+	# h5_file = h5py.File(path,'r')
+ #  	cluster = h5_file['data'].value
+  	cluster_unique = unique(data)
   	cluster_num = len(cluster_unique)
   	print("there are %d clusters." %cluster_num)
-	print(cluster)
+	print(data)
 	return data

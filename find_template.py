@@ -8,6 +8,10 @@ import h5py
 from PIL import Image
 import matplotlib.pyplot as plt
 import imagehash
+import time
+import multiprocessing
+from multiprocessing import Pool
+import math
 
 def ahash(image_mat):
 	s = 0 
@@ -235,12 +239,91 @@ def findTemplate_v4(template_path, h5_path, hash_dir, hash_type, template_intens
 				find_template = j+1
 			print(template_intensity[find_template-1])
 		intensity_data.append(template_intensity[find_template-1])
-		# print >> hash_res, (index, cluster_id, find_template, hash_max)
 		# hash_res.write(str(index)+','+ str(find_template) + ','+str(hash_max)+'\n') 
 	# hash_res.close()
 	cluster_file.close()
 	cxi_file.create_dataset('sim_intensity', data = intensity_data)
 	cxi_file.close()
+
+def calc_intensity_by_mask(mask, mat):
+	mask_flat = mask.flatten()
+	mat_flat = mat.flatten()
+	intensity = float("inf")
+	if (len(mat_flat) == len(mask_flat)):
+		background = 0
+		signal = 0
+		background_count = 0
+		signal_count = 0
+		for i in range(len(mask_flat)):
+			pixel = mat_flat[i]
+			if (mask_flat[i]):
+				background += pixel
+				background_count +=1
+			else:
+				signal += pixel
+				signal_count +=1
+		intensity = np.divide(signal, signal_count) - np.divide(background, background_count)
+	return intensity
+
+def findTemplate_v5(process_n):
+	cluster_file = h5py.File(h5_path)
+	# cxi_file = h5py.File(cxi_path)
+	cluster_data = cluster_file['data'].value
+	template = h5py.File(template_path, 'r') 
+	template_data = template['templates'].value
+	cluster_type = os.path.basename(template_path).split('_templates')[0]
+	if hash_type == 0:
+		filename = str(cluster_type)+'_ahash_res.dat'
+	elif hash_type == 1:
+		filename = str(cluster_type)+'_dhash_res.dat'
+	else:
+		filename = str(cluster_type)+'_phash_res.dat'
+	# hash_path = os.path.join(hash_dir, filename)
+	
+	total_size = len(cluster_data)
+	# total_size = 40
+	perSize = int(math.ceil(total_size / 4))
+	start_line = process_n*perSize
+	if (process_n+1)*perSize > total_size:
+		end_line = total_size
+		print("last_end_line:",end_line)
+	else:
+	    end_line = (process_n+1)*perSize
+	    print("end_line:",end_line)
+
+	cluster_num = 0
+	intensity_data = []
+	for index in range(start_line, end_line):
+		hash_max = 0
+		image_mat = cluster_data[index]
+		# if index == 2747:
+		for j in range(start_line, end_line):
+			if hash_type == 0:
+				hash_template = ahash(template_data[j])
+				hash_image = ahash(image_mat)
+			elif hash_type == 1:
+				hash_template = dhash(template_data[j])
+				hash_image = dhash(image_mat)
+			else:
+				hash_template = imagehash.phash(Image.fromarray(template_data[j]), hash_size=8, highfreq_factor=4)
+				hash_image = imagehash.phash(Image.fromarray(image_mat), hash_size=8, highfreq_factor=4)
+			hash_cmp = cmpHash(hash_template, hash_image)
+			# print(hash_template)
+			# hash_cmp = 1 - (hash_template - hash_image)/len(hash_template.hash)**2
+			if hash_cmp > hash_max:
+				hash_max = hash_cmp
+				find_template = j+1
+			mask = template_mask[find_template-1]
+			intensity = calc_intensity_by_mask(mask, image_mat)	
+		print(index, intensity)
+		intensity_data.append((index, intensity))
+		# hash_res.write(str(index)+','+ str(intensity)+'\n') 
+	# np.save(hash_res, intensity_data)
+	# hash_res.close()
+	cluster_file.close()
+	# cxi_file.create_dataset('c_0.4_intensity', data = intensity_data)
+	# cxi_file.close()
+	return intensity_data
 
 
 def calAccurate(hash_dir):
@@ -291,14 +374,17 @@ def calAccurate_v2(hash_dir, cluster_type):
 
 if __name__ == '__main__':
 
-	h5_path = '/Users/wyf/Desktop/anti_stat/crop_test.h5'
+	h5_path = '/Users/wyf/Desktop/anti_stat/crop5000.h5'
 	# cluster_path = '/Users/wyf/Desktop/anti_stat/200_sed_res.dat'
-	cluster_dir = '/Users/wyf/Documents/test_doc/cluster_res/'
-	template_dir = '/Users/wyf/Documents/test_doc/templates/'
-	hash_dir = '/Users/wyf/Documents/test_doc/40hash_res-v2/'
-	template_intensity_path = '/Users/wyf/Documents/test_doc/templates/signal_0.2_intensity.npy'
-	cxi_path = '/Users/wyf/Documents/SFX/keke/cxi_hit/r0003/hit100/r0003-rank1-job0.cxi'
-	template_intensity = np.load(template_intensity_path)
+	cluster_dir = '/Users/wyf/Documents/100f_result/cluster_res/'
+	template_dir = '/Users/wyf/Documents/100f_result/templates/'
+	hash_dir = '/Users/wyf/Documents/100f_result/hash_res/'
+	# template_intensity_path = '/Users/wyf/Documents/100f_result/templates/signal_0.2_correlation_intensity.npy'
+	template_mask_path = '/Users/wyf/Documents/100f_result/templates/signal_0.3_correlation_mask.npy'
+	cxi_path = '/Users/wyf/Documents/SFX/keke/cxi_hit/r0004/hit5000/r0004-rank1-job0.cxi'
+	template_path = '/Users/wyf/Documents/100f_result/templates/100_correlation_templates.h5'
+	# template_intensity = np.load(template_intensity_path)
+	template_mask = np.load(template_mask_path)
 	cluster_files = os.listdir(cluster_dir)
 	cluster_list = [os.path.join(cluster_dir, f) for f in cluster_files if f.endswith('cluster_res.h5')]
 	templates_files = os.listdir(template_dir)
@@ -312,8 +398,25 @@ if __name__ == '__main__':
 	# 	# calAccurate_v2(hash_dir, cluster_type)
 	# calAccurate(hash_dir)
 
-	template_path = '/Users/wyf/Documents/test_doc/templates/112_cosine_templates.h5'
 	# findTemplate_v3(template_path, h5_path, hash_dir, 1)
-	findTemplate_v4(template_path, h5_path, hash_dir, 1, template_intensity, cxi_path)
+	# findTemplate_v4(template_path, h5_path, hash_dir, 1, template_intensity, cxi_path)
+	t1 = time.time()
+	# findTemplate_v5(template_path, h5_path, hash_dir, 1, template_mask, cxi_path)
+	hash_type = 1
+	pool = multiprocessing.Pool(processes=4)
+	result = pool.map(findTemplate_v5, range(4))
+	res=[]
+	cxi_file = h5py.File(cxi_path)
+	print(result[0])
+	for n in range(4):
+		res += result[n]
+	hash_res = open('/Users/wyf/Documents/100f_result/c_0.4_intensity.txt','w')
+	np.save('/Users/wyf/Documents/100f_result/c_0.4_intensity.txt', res)
+	# cxi_file.create_dataset('c_4_intensity', data = res)
+	# cxi_file.attrs['c_4_intensity'][:] = res
+	cxi_file.close()
+	t2 = time.time()
+	print("total time used:%d" %(t2-t1))
+
 
 

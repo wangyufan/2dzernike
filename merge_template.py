@@ -92,7 +92,7 @@ def get_template_mat_v2(cluster_elements, cluster_data):
 
 def get_res_v2(h5_path, cluster_path):
 	h5_data = h5py.File(h5_path,'r')
-	cluster_data = h5_data['cluster_data'].value
+	cluster_data = h5_data['data'].value
 	h5_cluster = h5py.File(cluster_path,'r')
 	cluster_res = h5_cluster['data'].value
 	cluster_unique = np.unique(cluster_res)
@@ -110,7 +110,8 @@ def get_res_v2(h5_path, cluster_path):
 		template_mat = np.true_divide(template_sum, cluster_size)
 		templates.append(template_mat)
 	# print templates
-	path = '/Users/wyf/Documents/test_doc/40templates-v2/'
+	path = '/Users/wyf/Documents/100f_result/templates/'
+	# os.makedirs(path)
 	filename = str(cluster_num)+'_'+str(cluster_type)+'_templates.h5'
 	output = h5py.File(path + filename,'w')
 	output.create_dataset('templates', data = templates)
@@ -147,10 +148,10 @@ def get_res(h5_path, cluster_res, output):
 
 
 if __name__ == '__main__':
-	h5_path = '/Users/wyf/Desktop/anti_stat/crop_test.h5'
+	h5_path = '/Users/wyf/Desktop/anti_stat/crop5000.h5'
 	# cluster_res = '/Users/wyf/Desktop/anti_stat/200_sed_res.dat'
 	# output = '/Users/wyf/Desktop/anti_stat/4_template.h5'
-	cluster_dir = '/Users/wyf/Documents/test_doc/40cluster_res/'
+	cluster_dir = '/Users/wyf/Documents/100f_result/cluster_res/'
 	files = os.listdir(cluster_dir)
 	cluster_list = [os.path.join(cluster_dir, f) for f in files if f.endswith('cluster_res.h5')]
 	for cluster in cluster_list:
