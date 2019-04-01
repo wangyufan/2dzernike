@@ -73,10 +73,11 @@ if __name__ == "__main__":
   # file2 = h5py.File('crop248.h5','r')
   # cluster_h5 = file1['data'].value + file2['data'].value
 
-  path = '/Users/wyf/Desktop/anti_stat/crop_test.h5'
+  # path = '/Users/wyf/Desktop/anti_stat/crop_.h5'
+  path = '/Users/wyf/Documents/real_data/cluster_data.h5'
   h5_file = h5py.File(path,'r')
   # cluster_h5 = h5_file['data'].value
-  cluster_h5 = h5_file['cluster_data'].value[:40]
+  cluster_h5 = h5_file['peak_mat'].value
   # print "----",cluster_h5
   # imlist=[]  
   # for p in range(len(cluster_h5)):
@@ -95,9 +96,9 @@ if __name__ == "__main__":
   # print "features Matrix:"
   # print features
   t2 = time.time()
-  print "time used for getting features matrix: ", t2 - t1
+  print("time used for getting features matrix: ", t2 - t1)
   t3 = time.time()
-  print cluster_type
+  print(cluster_type)
   tree_list = Clustering_v2.hcluster(features, cluster_num, cluster_type) #set cluster_num as x
   # Clustering_v2.hcluster(features, cluster_num, 'b')
   # Clustering_v2.hcluster(features, cluster_num, 'cos')
@@ -129,5 +130,4 @@ if __name__ == "__main__":
   #   else:
   #     im.show(imlist[i])
   t_e = time.time()
-  print "total time used: ", t_e - t_s
-  print "OK"
+  print("total time used: ", t_e - t_s)
