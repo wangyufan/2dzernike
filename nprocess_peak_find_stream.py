@@ -50,7 +50,7 @@ def cmpHash(hash1, hash2):
 			n = n + 1
 	return 1 - np.true_divide(n, 64)
 
-def calc_intensity_by_mask_0121(mask, mat):
+def calc_intensity_by_mask_0121(mask, mat, flag):
 	mask_flat = mask.flatten()
 	mat_flat = mat.flatten()
 	intensity = float("inf")
@@ -64,13 +64,19 @@ def calc_intensity_by_mask_0121(mask, mat):
 			if (int(mask_flat[i]) == 1):
 				background += pixel
 				background_count +=1
+
 			elif (int(mask_flat[i]) == 0):
 				signal += pixel
 				signal_count +=1
-		intensity = np.divide(signal, signal_count) - np.divide(background, background_count)
-        #intensity=signal-signal_count*np.divide(background,background_count)
+		if flag:
+			print("signal=    ",int(signal/signal_count))
+			print("background=",int(background/background_count))
+			print("intensity= ",int(np.divide(signal, signal_count) - np.divide(background, background_count)))
+		#intensity = np.divide(signal, signal_count) - np.divide(background, background_count)
+		#intensity = signal - signal_count*np.divide(background, background_count)
+		intensity = signal
 	return intensity
-
+	
 def findTemplate(perSize, process_n, node_n, xy_mat, hash_type, template_path, base_path):
 	template = h5py.File(template_path, 'r') 
 	template_data = template['templates'].value
@@ -83,6 +89,7 @@ def findTemplate(perSize, process_n, node_n, xy_mat, hash_type, template_path, b
 	    end_line = (process_n+1)*perSize
 	    print("end_line:",end_line)
 	data = []
+	flag=False
 	for index in range(start_line, end_line):
 		#get one frame in a cxi
 		cxi_id = xy_mat[index][0][0]
@@ -90,14 +97,17 @@ def findTemplate(perSize, process_n, node_n, xy_mat, hash_type, template_path, b
 		x_arr = [x[2] for x in xy_mat[index]]
 		y_arr = [x[3] for x in xy_mat[index]]
 		# base_path = '/Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit150/'
-		cxi_path = base_path + 'r0005-rank1-job' + str(cxi_id)+'.cxi'
+		# cxi_path = base_path + 'r0005-rank1-job' + str(cxi_id)+'.cxi'
+		cxi_path = base_path + 'cxilr2816-r0'+ str(cxi_id)+'-c00.cxi'
 		f_cxi = h5py.File(cxi_path, 'r')
-		frames = f_cxi['entry_1/data_1/data'].value
+		# frames = f_cxi['entry_1/data_1/data'].value
+		frames = f_cxi['entry_1/instrument_1/detector_1/detector_corrected/data']
 		full_mat = frames[frame_id] #start from 0
+		# print("full_mat===============================",full_mat)
 		f_cxi.close()
 		for (x, y) in zip(x_arr, y_arr):
 			#deal with every peak in a frame 
-			image_mat = full_mat[(x - 4): (x + 4), (y - 4): (y + 4)]
+			image_mat = full_mat[(x - 4): (x + 4), (y - 4): (y + 4)] #click_xy != matrix_xy
 			hash_max = 0
 			for j in range(len(template_data)):
 				if hash_type == 0:
@@ -113,10 +123,24 @@ def findTemplate(perSize, process_n, node_n, xy_mat, hash_type, template_path, b
 				if hash_cmp > hash_max:
 					hash_max = hash_cmp
 					find_template = j+1
+			if(int(y)==434 and int(x)==588):
+			# if(int(y)==749 and int(x)==1013):
+				print("template_mask[",find_template-1,"]")
+				# print(template_mask[find_template-1])
+				print("cxi_num:", cxi_id,frame_id)
+				print("===============================peak_matrix================================")
+				print((image_mat.astype(int)))
+				mask = template_mask[find_template-1]
+				print("===============================2-3-5 mask ================================")
+				print(mask)
+				print("===============================intensity =================================")
+				print("cxi:", cxi_id,"  frame:",frame_id, "  x:",x, "  y:",y)
+				flag=True
 			mask = template_mask[find_template-1]
-			intensity = calc_intensity_by_mask_0121(mask, image_mat)
+			intensity = calc_intensity_by_mask_0121(mask, image_mat, flag)
 			data.append((cxi_id, frame_id, intensity))# (x,y) in order in every frame
 			print(cxi_id, frame_id, x, y, intensity)
+			flag=False
 	return data
 
 def get_xy(filepath):
@@ -126,6 +150,7 @@ def get_xy(filepath):
     flag_hkl = False
     one_frame_xy_mat = []
     count = 0
+    peak = 0
     for line in lines:
     	linesplit = line.split()
     	if (len(linesplit) == 10):
@@ -135,8 +160,10 @@ def get_xy(filepath):
             	continue #??
     	if (len(linesplit) == 3):
             if (linesplit[0] == "Image"):
-            	# Image filename: /Users/wyf/Documents/SFX/keke/cxi_hit/r0004/hit5000/r0004-rank1-job0.cxi
-            	cxi_num = int(linesplit[2].split('-')[2].split('.')[0].split('job')[1])
+            	# Image filename: /Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit5000/r0005-rank1-job0.cxi
+            	# cxi_num = int(linesplit[2].split('-')[2].split('.')[0].split('job')[1])
+            	# Image filename: /Users/apple001/Documents/TempFiles/DataFromServer/dataCXI/cxilr2816-r0208-c00.cxi
+            	cxi_num = int(linesplit[2].split('-')[1].split('r0')[1])
             	print("cxi_num:", cxi_num)
     	if (len(linesplit) == 2):
         	if(linesplit[0] == "Event:"):
@@ -146,13 +173,17 @@ def get_xy(filepath):
         		# print(len(xy_mat), "==*********===", count)  , 19944/20w with no reflection frames
     	if (len(linesplit) == 10 and flag_hkl):
             intensity_hkl = linesplit[3]
+            # X_hkl = linesplit[7]
+            # Y_hkl = linesplit[8]
             X_hkl = linesplit[8]
             Y_hkl = linesplit[7]
+            peak+=1
             one_frame_xy_mat.append((cxi_num, frame_num, int(float(X_hkl) + 0.5), int(float(Y_hkl) + 0.5)))
     	if (len(linesplit) == 3 and linesplit[0] == "End"):
     		flag_hkl = False
     		xy_mat.append(one_frame_xy_mat)
     file.close()
+    print(peak)
     return xy_mat
 
 
@@ -176,15 +207,18 @@ if __name__ == "__main__":
 	process_num = args.processnum
 	template_mask_path = args.mask
 	# template_mask_path = '/Users/wyf/Documents/100f_result/templates/signal_235_braycurtis_mask.npy'
+	mask_type = os.path.basename(template_mask_path).split('_')[2]
 	template_mask = np.load(template_mask_path)
 	frame_mat = get_xy(stream_path)# the number of frames
 	total_size = len(frame_mat)
-	print(total_size)
+	print(frame_mat[0])
 	perSize = int(math.ceil(total_size / (process_num*node_num)))#amount of frames pre process
 	
 	arr = []
 	res = []
 	base_path = '/home/dongxq/Documents/2d_proj/'
+	# base_path = '/Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit150/'
+	# base_path = '/Volumes/Untitled/CXI/'
 	pool = multiprocessing.Pool(processes=process_num)
 	for process_n in range((node_n-1)*process_num, node_n*process_num):
 		elem = pool.apply_async(findTemplate, (perSize, process_n, node_n, frame_mat, 0, template_path, base_path))
@@ -196,8 +230,9 @@ if __name__ == "__main__":
 		res.extend(item.get())
 	print("get new intensity:",len(res),", processed frames:", total_size)
 
-	# intensity_path = '/Users/wyf/Documents/100f_result/20w_b_235_intensity.npy'
-	intensity_path = base_path+'result/'+str(node_n)+'_20w_cc_1.5_intensity.npy'
+	# intensity_path = '/Users/wyf/Documents/100f_result/test_cc_235_intensity.npy'
+	# intensity_path = base_path+'result/'+str(node_n)+'_20w_cc_235_intensity.npy'
+	intensity_path = base_path+'result/intensity_' + str(mask_type) + '_' + str(node_n) + '.npy'
 	np.save(intensity_path, res)
 	t_2 = time.time()
 	print("time used:", t_2 - t_1)
