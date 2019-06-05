@@ -10,21 +10,22 @@ def MatrixToImage(data):
   return new_im
 
 def H5ToMatrix(filename, key):
-  f = h5py.File(filename,'r')                      
+  f = h5py.File(filename,'r')
   file = f[key].value
   return file 
 
 def Draw_v2(path, cluster):
-  data = H5ToMatrix(path, 'cluster_data')
+  data = H5ToMatrix(path, 'peak_mat')
   cluster_res = H5ToMatrix(cluster, 'data')
   cluster_size = len(cluster_res)
   cluster_type = os.path.basename(cluster).split('_')[0]
-  output = '/Users/wyf/Documents/test_doc/crop_image_'+str(cluster_size)+'_'+str(cluster_type)+'/'
+  output = '/Users/wyf/Documents/100f_result/cluster_image/crop_image_'+str(cluster_size)+'_'+str(cluster_type)+'/'
   os.mkdir(output)
+
   for index in range(cluster_size):
     cluster_id = cluster_res[index]
     image_mat = data[index]
-    im = MatrixToImage(image_mat)
+    im = MatrixToImage(image_mat*0.1)
     filename = str(cluster_id)+'_'+str(index)+".jpg"
     im.resize((640,640)).convert('L').save(output+filename)
 
@@ -45,8 +46,8 @@ def Draw_v2(path, cluster):
 #         im.resize((640,640)).convert('L').save('/Users/wyf/Documents/crop_image8/'+str(count)+'_'+str(i)+".jpg")
 
 if __name__ == "__main__":
-  path = '/Users/wyf/Desktop/anti_stat/crop_test.h5'
-  cluster_dir = '/Users/wyf/Documents/test_doc/cluster_res/'
+  path = '/Users/wyf/Documents/real_data/cluster_data_r15.h5'
+  cluster_dir = '/Users/wyf/Documents/100f_result/cluster_res/'
   files = os.listdir(cluster_dir)
   cluster_list = [os.path.join(cluster_dir, f) for f in files if f.endswith('cluster_res.h5')]
   # cluster = '/Users/wyf/Desktop/anti_stat/200_sed_res.dat'

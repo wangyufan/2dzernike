@@ -124,7 +124,7 @@ def findTemplate(perSize, process_n, node_n, xy_mat, hash_type, template_path, b
 					if hash_cmp > hash_max:
 						hash_max = hash_cmp
 						find_template = j+1
-				if(int(y)==1105 and int(x)==344):
+				if(int(y)==1105 and int(x)==344) or (int(y)==932 and int(x)==444) or (int(y)==995 and int(x)==284) or (int(y)==635 and int(x)==429) or (int(y)==871 and int(x)==316):
 				# if(int(y)==749 and int(x)==1013):
 					print("template_mask[",find_template-1,"]")
 					# print(template_mask[find_template-1])
@@ -165,7 +165,7 @@ def get_xy(filepath):
             	# cxi_num = int(linesplit[2].split('-')[2].split('.')[0].split('job')[1])
             	# Image filename: /Users/apple001/Documents/TempFiles/DataFromServer/dataCXI/cxilr2816-r0208-c00.cxi
             	cxi_num = int(linesplit[2].split('-')[1].split('r0')[1])
-            	print("cxi_num:", cxi_num)
+            	# print("cxi_num:", cxi_num)
     	if (len(linesplit) == 2):
         	if(linesplit[0] == "Event:"):
         		frame_num = int(linesplit[1].split('//')[1])
@@ -178,6 +178,8 @@ def get_xy(filepath):
             # Y_hkl = linesplit[8]
             X_hkl = linesplit[8]
             Y_hkl = linesplit[7]
+            if (frame_num ==  79) and (cxi_num == 209):
+            	print(X_hkl,Y_hkl)
             peak+=1
             one_frame_xy_mat.append((cxi_num, frame_num, int(float(X_hkl) + 0.5), int(float(Y_hkl) + 0.5)))
     	if (len(linesplit) == 3 and linesplit[0] == "End"):
@@ -219,65 +221,66 @@ def findTemplate_v2(perSize, process_n, node_n, xy_mat, hash_type, template_path
 		# print("full_mat===============================",full_mat)
 		f_cxi.close()
 		find_mat = np.zeros([8, 8])
-		# if (frame_id ==  79) and (cxi_id == 209):
-		for (x, y) in zip(x_arr, y_arr):
-			#deal with every peak in a frame
-			hash_max = 0
-			max_intensity = 0
-			for x_left in range(-1, 2):
-				for y_left in range(-1, 2):
-					image_mat = full_mat[(x - mask_half + x_left): (x + mask_half + x_left), (y - mask_half + y_left): (y + mask_half + y_left)] #click_xy != matrix_xy
-					# if(int(y)==1105 and int(x)==344):
-					# 	print("-----x_left-----",x_left,"-----y_left------",y_left)
-					# 	print(image_mat.astype(int))
-					for j in range(len(template_data)):
-						if hash_type == 0:
-							hash_template = ahash(template_data[j])
-							hash_image = ahash(image_mat)
-						elif hash_type == 1:
-							hash_template = dhash(template_data[j])
-							hash_image = dhash(image_mat)
-						else:
-							hash_template = imagehash.phash(Image.fromarray(template_data[j]), hash_size=8, highfreq_factor=4)
-							hash_image = imagehash.phash(Image.fromarray(image_mat), hash_size=8, highfreq_factor=4)
-						hash_cmp = cmpHash(hash_template, hash_image)
-						# find template for a (x, y) of 9 possible images
-						if hash_cmp > hash_max:
-							# if(int(y)==1105 and int(x)==346):
-							# 	print("-----x_left-----",x_left,"-----y_left------",y_left,"----",hash_max,hash_cmp,"[",j)
-							hash_max = hash_cmp
-							find_template = j+1
-							find_mat = image_mat
-							mask = template_mask[j]
-							intensity = calc_intensity_by_mask_0121(mask, image_mat, flag)
-							max_intensity = intensity
-						if hash_cmp == hash_max:
-							# if(int(y)==1105 and int(x)==346):
-							# 	print("=====x_left-----",x_left,"-----y_left------",y_left,"----",hash_max,"[",j)
-							mask = template_mask[j]
-							intensity = calc_intensity_by_mask_0121(mask, image_mat, flag)
-							if intensity > max_intensity:
-								max_intensity = intensity
+		if (frame_id ==  79) and (cxi_id == 209):
+			for (x, y) in zip(x_arr, y_arr):
+				# print( x, y)
+				#deal with every peak in a frame
+				hash_max = 0
+				max_intensity = 0
+				for x_left in range(-1, 2):
+					for y_left in range(-1, 2):
+						image_mat = full_mat[(x - mask_half + x_left): (x + mask_half + x_left), (y - mask_half + y_left): (y + mask_half + y_left)] #click_xy != matrix_xy
+						# if(int(y)==1105 and int(x)==344):
+						# 	print("-----x_left-----",x_left,"-----y_left------",y_left)
+						# 	print(image_mat.astype(int))
+						for j in range(len(template_data)):
+							if hash_type == 0:
+								hash_template = ahash(template_data[j])
+								hash_image = ahash(image_mat)
+							elif hash_type == 1:
+								hash_template = dhash(template_data[j])
+								hash_image = dhash(image_mat)
+							else:
+								hash_template = imagehash.phash(Image.fromarray(template_data[j]), hash_size=8, highfreq_factor=4)
+								hash_image = imagehash.phash(Image.fromarray(image_mat), hash_size=8, highfreq_factor=4)
+							hash_cmp = cmpHash(hash_template, hash_image)
+							# find template for a (x, y) of 9 possible images
+							if hash_cmp > hash_max:
+								# if(int(y)==1105 and int(x)==346):
+								# 	print("-----x_left-----",x_left,"-----y_left------",y_left,"----",hash_max,hash_cmp,"[",j)
+								hash_max = hash_cmp
 								find_template = j+1
 								find_mat = image_mat
+								mask = template_mask[j]
+								intensity = calc_intensity_by_mask_0121(mask, image_mat, flag)
+								max_intensity = intensity
+							if hash_cmp == hash_max:
+								# if(int(y)==1105 and int(x)==346):
+								# 	print("=====x_left-----",x_left,"-----y_left------",y_left,"----",hash_max,"[",j)
+								mask = template_mask[j]
+								intensity = calc_intensity_by_mask_0121(mask, image_mat, flag)
+								if intensity > max_intensity:
+									max_intensity = intensity
+									find_template = j+1
+									find_mat = image_mat
 
-					# if(int(y)==1105 and int(x)==346):
-					# 	print("template_mask[",find_template-1,"]")
-					# 	print(template_mask[find_template-1])
-					# 	print("cxi_num:", cxi_id,frame_id)
-					# 	print("===============================peak_matrix================================")
-					# 	print(image_mat.astype(int))
-					# 	mask = template_mask[find_template-1]
-					# 	print("=============================== mask ================================")
-					# 	print(mask)
-					# 	print("===============================intensity =================================")
-					# 	print("cxi:", cxi_id,"  frame:",frame_id, "  x:",x, "  y:",y,"intensity",max_intensity)
-					# 	flag=True
-			# mask = template_mask[find_template-1]
-			# intensity = calc_intensity_by_mask_0121(mask, find_mat, flag)
-			data.append((cxi_id, frame_id, max_intensity))# (x,y) in order in every frame
-			# print(cxi_id, frame_id, x, y, intensity)
-			flag=False
+				if(int(y)==1105 and int(x)==346) or (int(y)==932 and int(x)==444) or (int(y)==995 and int(x)==284) or (int(y)==635 and int(x)==429) or (int(y)==871 and int(x)==316):
+					print("template_mask[",find_template-1,"]")
+					# print(template_mask[find_template-1])
+					print("cxi_num:", cxi_id,frame_id)
+					print("===============================peak_matrix================================")
+					print(find_mat.astype(int))
+					mask = template_mask[find_template-1]
+					print("=============================== mask ================================")
+					print(mask)
+					print("===============================intensity =================================")
+					print("cxi:", cxi_id,"  frame:",frame_id, "  x:",x, "  y:",y,"intensity",max_intensity)
+					flag=True
+				# mask = template_mask[find_template-1]
+				# intensity = calc_intensity_by_mask_0121(mask, find_mat, flag)
+				data.append((cxi_id, frame_id, max_intensity))# (x,y) in order in every frame
+				
+				flag=False
 	return data
 
 if __name__ == "__main__":
@@ -309,9 +312,9 @@ if __name__ == "__main__":
 	
 	arr = []
 	res = []
-	base_path = '/home/dongxq/Documents/2d_proj/'
+	# base_path = '/home/dongxq/Documents/2d_proj/'
 	# base_path = '/Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit150/'
-	# base_path = '/Volumes/Untitled/CXI/'
+	base_path = '/Volumes/Untitled/CXI/'
 	pool = multiprocessing.Pool(processes=process_num)
 	for process_n in range((node_n-1)*process_num, node_n*process_num):
 		elem = pool.apply_async(findTemplate_v2, (perSize, process_n, node_n, frame_mat, 0, template_path, base_path))
@@ -325,8 +328,8 @@ if __name__ == "__main__":
 
 	# intensity_path = '/Users/wyf/Documents/100f_result/test_cc_235_intensity.npy'
 	# intensity_path = base_path+'result/'+str(node_n)+'_20w_cc_235_intensity.npy'
-	intensity_path = base_path+'result/intensity_' + str(mask_type) + '_' + str(node_n) + '.npy'
-	np.save(intensity_path, res)
+	# intensity_path = base_path+'result/intensity_' + str(mask_type) + '_' + str(node_n) + '.npy'
+	# np.save(intensity_path, res)
 	t_2 = time.time()
 	print("time used:", t_2 - t_1)
 
