@@ -19,13 +19,13 @@ import Clustering_v2
 from scipy.cluster import hierarchy
 import matplotlib.pyplot as plt
 import pylab
-
+import random 
 
 
 def preprocess_image(file):
   image = flex.vec3_double()
   # original = open(h5file.split(".")[0]+'_original.dat','w')
-  size = len(file)
+  size = file.shape[0]
   for x in range(0, size):
     for y in range(0, size):
       value = file[x][y]
@@ -76,8 +76,7 @@ if __name__ == "__main__":
 
   # path = '/Users/wyf/Desktop/anti_stat/crop200.h5'
   h5_file = h5py.File(path,'r')
-  cluster_h5 = h5_file['cluster_data'].value
-  print(len(cluster_h5))
+  cluster_h5 = h5_file['peak_mat']
   # imlist=[]  
   # for p in range(len(cluster_h5)):
   #   # pylab.subplot(4, 5, p + 1)
@@ -86,10 +85,15 @@ if __name__ == "__main__":
   #   im = MatrixToImage(mat)
   #   imlist.append(im)
   t1 = time.time()
-  features = np.zeros([len(cluster_h5), 12], dtype=np.float)
+  features = np.zeros([9449, 12], dtype=np.float)
   # when namx=5, a vec has 21 items, but the real part is the same when l<0, so just calculate l>=0, 12 items.
   i = 0
-  for f in cluster_h5:
+  total_ids = list(range(0,len(cluster_h5)))
+  cluster_ids = random.sample(total_ids, 9449)
+  # print(cluster_ids)
+  for j in cluster_ids:
+    # print(i,j)
+    f = cluster_h5[j]
     features[i] = tst_2d_zernike_mom(n, l, f)
     i += 1
   # print "features Matrix:"

@@ -47,16 +47,16 @@ if __name__ == '__main__':
 	args = sys.argv[1:]
 	signal_perc = args[0]
 	bkg_perc = args[1]
-	template_dir = '/Users/wyf/Documents/100f_result/templates/'
+	template_dir = '/Users/wyf/Documents/now/templates/'
 	files = os.listdir(template_dir)
-	template_list = [os.path.join(template_dir, f) for f in files if f.endswith('200_correlation_templates.h5')]
+	template_list = [os.path.join(template_dir, f) for f in files if f.endswith('correlation_templates.h5')]
 	for template_path in template_list:
 		template_type = os.path.basename(template_path).split('_')[1]
 		mask_list = get_mask_v2(signal_perc, bkg_perc, template_path)
 		arr = np.unique(mask_list, axis=0, return_counts=True)
 		#print("unique template's 0-1 matrix: %d"%len(arr[1]))
 		#print("the amount of every 0-1 matrix: ", arr[1])
-		output = '/Users/wyf/Documents/100f_result/templates/signal_'+str(signal_perc)+ '_' + str(bkg_perc) + '_' + str(template_type) + '_mask.npy'
+		output = '/Users/wyf/Documents/now/templates/signal_'+str(signal_perc)+ '_' + str(bkg_perc) + '_' + str(template_type) + '_mask.npy'
 		np.save(output, mask_list)
 		mask_list = np.load(output)
 		arr = np.unique(mask_list, axis=0, return_counts=True)

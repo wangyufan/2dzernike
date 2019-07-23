@@ -68,9 +68,9 @@ def calc_intensity_by_mask_0121(mask, mat, flag):
 		# 	print("background=",int(background/background_count))
 		# 	print("intensity= ",int(np.divide(signal, signal_count) - np.divide(background, background_count)))
 		# intensity = np.divide(signal, signal_count) - np.divide(background, background_count)
-		# intensity = signal - signal_count*np.divide(background, background_count)
+		intensity = signal - signal_count*np.divide(background, background_count)
 		# intensity = signal - np.divide(background, background_count)
-		intensity = signal - med
+		# intensity = signal - med
 	return intensity
 
 def get_xy(filepath):
@@ -93,7 +93,9 @@ def get_xy(filepath):
             	# Image filename: /Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit5000/r0005-rank1-job0.cxi
             	# cxi_num = int(linesplit[2].split('-')[2].split('.')[0].split('job')[1])
             	# Image filename: /Users/apple001/Documents/TempFiles/DataFromServer/dataCXI/cxilr2816-r0208-c00.cxi
-            	cxi_num = int(linesplit[2].split('-')[1].split('r0')[1])
+            	# /xfel/ffs/dat/ue_190607_SFX/proc/click/cxi_hit/r0200/min_grad_10-min_snr_12/r0200-rank2-job0.cxi
+            	cxi_num = int(linesplit[2].split('-')[2].split('rank')[1])
+            	cxi_file = os.path.split(linesplit[2])[-1]
             	# print("cxi_num:", cxi_num)
     	if (len(linesplit) == 2):
         	if(linesplit[0] == "Event:"):
@@ -107,7 +109,7 @@ def get_xy(filepath):
             # Y_hkl = linesplit[8]
             X_hkl = linesplit[8]
             Y_hkl = linesplit[7]
-            one_frame_xy_mat.append((cxi_num, frame_num, int(float(X_hkl) + 0.5), int(float(Y_hkl) + 0.5)))
+            one_frame_xy_mat.append((cxi_file, frame_num, int(float(X_hkl) + 0.5), int(float(Y_hkl) + 0.5)))
     	if (len(linesplit) == 3 and linesplit[0] == "End"):
     		flag_hkl = False
     		xy_mat.append(one_frame_xy_mat)
@@ -141,12 +143,14 @@ def findTemplate_v2(perSize, process_n, node_n, xy_mat, hash_type, template_path
 		y_arr = [x[3] for x in xy_mat[index]]
 		# base_path = '/Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit150/'
 		# cxi_path = base_path + 'r0005-rank1-job' + str(cxi_id)+'.cxi'
-		cxi_path = base_path + 'cxilr2816-r0'+ str(cxi_id)+'-c00.cxi'
+		# cxi_path = base_path + 'cxilr2816-r0'+ str(cxi_id)+'-c00.cxi'
+		cxi_path = os.path.join(base_path, "cxi_link", cxi_id)
+		cxi_path = os.path.join(base_path, cxi_id)
+		print("cxi_path:",cxi_path)
 		f_cxi = h5py.File(cxi_path, 'r')
-		# frames = f_cxi['entry_1/data_1/data'].value
-		frames = f_cxi['entry_1/instrument_1/detector_1/detector_corrected/data']
+		frames = f_cxi['entry_1/data_1/data']
+		# frames = f_cxi['entry_1/instrument_1/detector_1/detector_corrected/data']
 		full_mat = frames[frame_id] #start from 0
-		# print("full_mat===============================",full_mat)
 		f_cxi.close()
 		find_mat = np.zeros([15, 15])
 		# if (frame_id ==  79) and (cxi_id == 209):
@@ -256,9 +260,10 @@ if __name__ == "__main__":
 	
 	arr = []
 	res = []
-	base_path = '/home/dongxq/Documents/2d_proj/'
+	base_path = '/home/dongxq/Documents/cxi_data/'
 	# base_path = '/Users/wyf/Documents/SFX/kekeke/cxi_hit/r0005/hit150/'
 	# base_path = '/Volumes/Untitled/CXI/'
+	# base_path = '/Users/wyf/Documents/now/'
 	pool = multiprocessing.Pool(processes=process_num)
 	for process_n in range((node_n-1)*process_num, node_n*process_num):
 		elem = pool.apply_async(findTemplate_v2, (perSize, process_n, node_n, frame_mat, 0, template_path, base_path))
@@ -270,9 +275,9 @@ if __name__ == "__main__":
 		res.extend(item.get())
 	print("get new intensity:",len(res),", processed frames:", total_size)
 
-	# intensity_path = '/Users/wyf/Documents/100f_result/test_cc_235_intensity.npy'
-	# intensity_path = base_path+'result/'+str(node_n)+'_20w_cc_235_intensity.npy'
-	intensity_path = base_path+'result/2000_intensity_cut_med' + str(0.5) + '_' + str(node_n) + '.npy'
+	intensity_path = '/Users/wyf/Documents/now/run_21_33/intensity.npy'
+	intensity_path = base_path+str(node_n)+'_intensity.npy'
+	# intensity_path = base_path+'result/2000_intensity_cut_med' + str(0.5) + '_' + str(node_n) + '.npy'
 	np.save(intensity_path, res)
 	t_2 = time.time()
 	print("time used:", t_2 - t_1)

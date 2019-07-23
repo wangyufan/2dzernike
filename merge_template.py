@@ -161,7 +161,7 @@ def get_res_v3(h5_path, cluster_path):
 	cluster_num = len(cluster_unique)
 	cluster_type = os.path.basename(cluster_path).split('_')[0]
 	freq = dict(zip(*np.unique(cluster_res, return_counts=True)))
-	new_arr=sorted(freq.items(), key=lambda d: d[1], reverse = True)[:200] #[(cluster1, 330), (cluster9, 210)... (cluster5, 33)]
+	new_arr=sorted(freq.items(), key=lambda d: d[1], reverse = True)[:100] #[(cluster1, 330), (cluster9, 210)... (cluster5, 33)]
 	cluster_num = len(new_arr)
 	templates = []
 	for i in range(cluster_num):
@@ -169,13 +169,14 @@ def get_res_v3(h5_path, cluster_path):
 		cluster_id = i + 1
 		cluster_elements = np.where(cluster_res == new_arr[i][0]) #usage of nparray
 		cluster_size = len(list(cluster_elements)[0])
+		# print("there are %d elements in cluster %d. original cluster: %d" %(cluster_size,cluster_id,new_arr[i][0]))
 		print("there are %d elements in cluster %d. original cluster: %d" %(cluster_size,cluster_id,new_arr[i][0]))
 		template_sum = get_template_mat_v3(cluster_elements, cluster_data)
 		template_mat = (np.true_divide(template_sum, cluster_size)).astype(np.int)
 		templates.append(template_mat)
 
-	path = '/Users/wyf/Documents/100f_result/templates/'
-	# os.makedirs(path)
+	path = '/Users/wyf/Documents/now/templates/'
+	# os.mkdir(path)
 	filename = str(cluster_num)+'_'+str(cluster_type)+'_templates.h5'
 	output = h5py.File(path + filename,'w')
 	output.create_dataset('templates', data = templates)
@@ -217,6 +218,7 @@ def get_res_v4(h5_path, cluster_path):
 
 if __name__ == '__main__':
 	h5_path = '/Users/wyf/Documents/real_data/cluster_data_r15.h5'
+	h5_path =  '/Users/wyf/Documents/now/for_cluster.h5'
 	# cluster_res = '/Users/wyf/Desktop/anti_stat/200_sed_res.dat'
 	# output = '/Users/wyf/Desktop/anti_stat/4_template.h5'
 	cluster_dir = '/Users/wyf/Documents/100f_result/cluster_res/'
